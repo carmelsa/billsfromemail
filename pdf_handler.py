@@ -1,50 +1,29 @@
 import re
-import PyPDF2
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.converter import TextConverter
-from pdfminer.layout import LAParams
-from pdfminer.pdfpage import PDFPage
-from io import StringIO
+from collections import Counter
 
-HOD_HASHRON = 'כ לתשלום בש'
+import slate3k as slate
 
-
-def read_pdf_with_pdf2(pdf_path):
-    pdf_file_obj = open(pdf_path, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
-    print(pdf_reader.numPages)
-    page_obj = pdf_reader.getPage(0)
-    page_test = page_obj.extractText()
-    print(page_test)
-    information = pdf_reader.getDocumentInfo()
-    print(information)
-    pdf_file_obj.close()
-
-
-def read_pdf_with_miner(pdf_path):
-    rsrcmgr = PDFResourceManager()
-    retstr = StringIO()
-    laparams = LAParams()
-    device = TextConverter(rsrcmgr, retstr, laparams=laparams)
-    fp = open(pdf_path, 'rb')
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
-    password = ""
-    maxpages = 0
-    caching = True
-    pagenos = set()
-    for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password, caching=caching,
-                                  check_extractable=True):
-        interpreter.process_page(page)
-
-    text = retstr.getvalue()
-
-    fp.close()
-    device.close()
-    retstr.close()
-    return get_sum_for_pay(text)
+SUM_PREFIX = ':ח״שב םולשתל כ״הס'
 
 
 def get_sum_for_pay(text):
-    return re.search(r".*:ח״שב  םולשתל כ״הס\s+(?P<result>\d+\.\d+)", text).group("result")
+    return re.search(r".*:{0}\s+(?P<result>\d+\.\d+)".format(SUM_PREFIX), text).group("result")
 
 
+def get_sum_for_pay_before_text(text):
+    return re.search((r"(?P<result>\d+\.\d+)\s+%s" % SUM_PREFIX), text).group("result")
+
+
+def get_sum_for_pay_most_common(text):
+    array_all_num_in_text = re.findall(r"\d+\.\d+\s", text)
+    most_common = Counter(array_all_num_in_text).most_common(5)
+    first_item = most_common[0]
+    return max([float(item[0]) for item in most_common if item[1] == first_item[1]])
+
+
+
+def read_pdf_with_slate(pdf_path):
+    with open(pdf_path, 'rb') as f:
+        extracted_text = slate.PDF(f)
+    print(extracted_text)
+    return get_sum_for_pay_most_common(extracted_text.text())
