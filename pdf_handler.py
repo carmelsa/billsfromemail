@@ -1,4 +1,5 @@
 import re
+from io import BytesIO
 from collections import Counter
 
 import slate3k as slate
@@ -21,7 +22,12 @@ def get_sum_for_pay_most_common(text):
     return max([float(item[0]) for item in most_common if item[1] == first_item[1]])
 
 
-def read_pdf_with_slate(pdf_path):
+def read_pdf_path_with_slate(pdf_path):
     with open(pdf_path, 'rb') as f:
         extracted_text = slate.PDF(f)[0]
+    return get_sum_for_pay_most_common(extracted_text)
+
+
+def get_payment_amount(pdf):
+    extracted_text = slate.PDF(BytesIO(pdf))[0]
     return get_sum_for_pay_most_common(extracted_text)

@@ -27,5 +27,5 @@ def pdf_handler_base_test(file_name_by_payment, dir_name):
     current_path = os.path.dirname(__file__)
     for file_name, payment in file_name_by_payment.items():
         resource_path = os.path.join(current_path, "resources", dir_name, file_name)
-        payment_result = pdf_handler.read_pdf_with_slate(resource_path)
+        payment_result = pdf_handler.read_pdf_path_with_slate(resource_path)
         assert payment == payment_result
